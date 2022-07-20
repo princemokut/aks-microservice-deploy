@@ -1,0 +1,61 @@
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: posthub-aks-ingress--env
+  namespace: ns-posthub--env
+  annotations:
+    kubernetes.io/ingress.class: azure/application-gateway
+    cert-manager.io/cluster-issuer: letsencrypt-staging #change to prod after initial testing
+    # cert-manager.io/cluster-issuer: letsencrypt-prod #this is the cluster issuer, enable if you want to issue fulldomain cert and not use the wildcard cert instead assuming you have acquired wildcard and store in cert-manager namespace. If disabled, make sure to rename spec.tls.secretName to the wildcard secret's name
+    appgw.ingress.kubernetes.io/tls-redirect: "true"
+    cert-manager.k8s.io/acme-challenge-type: dns01
+spec:
+  tls:
+    - hosts:
+      # - posthub--env.myblogspace.app
+      - posthub--env.20.231.208.219.nip.io
+      secretName: posthub--env-cert-secret
+  rules:
+  # - host: posthub--env.myblogspace.app
+  - host: posthub--env.20.231.208.219.nip.io
+    http:
+      paths:
+      - path: /api/posthub
+        backend:
+          service:
+            name: posthub-service--env
+            port:
+              number: 3000
+        pathType: Prefix
+      - path: /api/posts
+        backend:
+          service:
+            name: posts-service--env
+            port:
+              number: 3000
+        pathType: Prefix
+      - path: /api/comments
+        backend:
+          service:
+            name: comments-service--env
+            port:
+              number: 3000
+        pathType: Prefix
+      - path: /api/users
+        backend:
+          service:
+            name: users-service--env
+            port:
+              number: 3000
+        pathType: Prefix
+      - path: /
+        backend:
+          service:
+            name: ui-service--env
+            port:
+              number: 3000
+        pathType: Prefix
+
+# path: "/?(.*)"  # this is for apps where you use react-router to route traffic around inside of a single page application, otherwise your react app would not serve up contents following a slash that's not specified in other routes.
+# note also that ingress routes are defined from more granular to more specific, so if you have a route like /foo/bar/baz, and you have a route like /foo/bar, then the /foo/bar route will match first, and the /foo/bar/baz route will never match, so put the more specific routes first (/foo/bar/baz). See https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-path-rules

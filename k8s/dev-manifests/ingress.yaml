@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: posthub-ingress-local
+  namespace: ns-posthub--env
+  labels:
+    name: posthub-ingress-local
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:
+  - host: posthub.live
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/api/comments/?(.*)"
+        backend:
+          service:
+            name: comments-service--env
+            port: 
+              number: 3000
+      - pathType: Prefix
+        path: "/api/posts/?(.*)"
+        backend:
+          service:
+            name: posts-service--env
+            port: 
+              number: 3000
+      - pathType: Prefix
+        path: "/api/posthub/?(.*)"
+        backend:
+          service:
+            name: posthub-service--env
+            port: 
+              number: 3000
+      - pathType: Prefix
+        path: "/api/users/?(.*)"
+        backend:
+          service:
+            name: users-service--env
+            port: 
+              number: 3000
+      - pathType: Prefix
+        path: "/?(.*)"
+        backend:
+          service:
+            name: ui-service--env
+            port: 
+              number: 3000

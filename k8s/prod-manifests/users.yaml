@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ns-posthub--env
+  labels:
+    name: ns-posthub--env
+
+# delete this later beofre handing over to linkedin
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name:  jwtsecret
+  namespace: ns-posthub--env
+data:
+   JWTKEY:  skdskdcmimsdcmdcpokdcaopsoas
+type: Opaque
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users--env
+  namespace: ns-posthub--env
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users--env
+  template:
+    metadata:
+      labels:
+        app: users--env
+    spec:
+      containers:
+        - name: users--env
+          # image: acr17713.azurecr.io/#{CUSTOMIMAGE_TAG}
+          # plan to remove this paramter and use github action to tag image in deploy step. images for dev and prod are same and no need to add -dev to the image name.
+          image: acr17713.azurecr.io/users
+          # image: princemokut/users
+          env:
+            - name: MONGO_URI
+              value: mongodb://users-mongo-service:27020/users
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwtsecret
+                  key: JWTKEY
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "350Mi"
+            limits:
+              memory: "900M"
+              cpu: "700m"
+          readinessProbe:
+            httpGet:
+              path: /api/users/healthcheck
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          ports:
+            - containerPort: 3000
+      imagePullSecrets:
+        - name: users-secret
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service--env
+  namespace: ns-posthub--env
+spec:
+  selector:
+    app: users--env
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: users--env

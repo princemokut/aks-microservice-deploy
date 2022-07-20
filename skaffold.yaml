@@ -1,0 +1,62 @@
+apiVersion: skaffold/v1
+kind: Config
+metadata:
+  name: posthublive
+deploy:
+  kubectl:
+    manifests:
+    - k8s/dev-manifests/comments.yaml
+    - k8s/dev-manifests/posthub.yaml
+    - k8s/dev-manifests/posts.yaml
+    - k8s/dev-manifests/ui.yaml
+    - k8s/dev-manifests/users.yaml
+    - k8s/dev-manifests/ingress.yaml
+    - k8s/comments-mongo.yaml
+    - k8s/posthub-mongo.yaml
+    - k8s/posts-mongo.yaml
+    - k8s/users-mongo.yaml
+    - k8s/nats-eventhub.yaml
+build:
+  local:
+    push: false
+  artifacts:
+    - image: princemokut/ui
+      context: ui
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - dest: .
+            src: 'src/**/*.js'
+    - image: princemokut/comments
+      context: comments
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - dest: .
+            src: 'src/**/*.ts'
+    - image: princemokut/posts
+      context: posts
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - dest: .
+            src: 'src/**/*.ts'
+    - image: princemokut/users
+      context: users
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - dest: .
+            src: 'src/**/*.ts'
+    - image: princemokut/posthub
+      context: posthub
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - dest: .
+            src: 'src/**/*.ts'
